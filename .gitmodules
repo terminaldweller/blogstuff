@@ -1,0 +1,3 @@
+[submodule "src/cstruct2luatbale/lua"]
+	path = src/cstruct2luatbale/lua
+	url = https://github.com/lua/lua
