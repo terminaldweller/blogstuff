@@ -6,7 +6,7 @@ CC?=clang
 CC_FLAGS=-fpic
 CC_EXTRA?=
 CTAGS_I_PATH?=./
-LD_FLAGS=-lm -ldl
+LD_FLAGS=-lm -ldl -g
 EXTRA_LD_FLAGS?=
 LIB_LUA=./lua/liblua.a
 ADD_SANITIZERS_CC= -g -fsanitize=address -fno-omit-frame-pointer
@@ -57,7 +57,7 @@ LD_FLAGS+=$(EXTRA_LD_FLAGS)
 
 .PHONY:all clean help ASM SO TAGS WASM JS
 
-all:$(TARGET)
+all:$(TARGET) $(TARGET)-dbg
 
 everything:$(TARGET) A ASM SO $(TARGET)-static $(TARGET)-dbg TAGS $(TARGET)-cov WASM JS
 
@@ -89,7 +89,7 @@ $(TARGET): $(TARGET).o lua.o $(LIB_LUA)
 $(TARGET)-static: $(TARGET).o $(LIB_LUA)
 	$(CC) $(LD_FLAGS) $^ -static -o $@
 
-$(TARGET)-dbg: $(TARGET).odbg
+$(TARGET)-dbg: $(TARGET).odbg lua.o $(LIB_LUA)
 	$(CC) $(LD_FLAGS) $^ -g -o $@
 
 $(TARGET)-cov: $(TARGET).ocov

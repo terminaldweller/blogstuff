@@ -27,7 +27,7 @@ typedef struct {
 /******************************************************************************/
 static b_t* pop_b_t(lua_State* ls, int index) {
   b_t* dummy;
-  luaL_checktype(ls, index, LUA_TUSERDATA);
+  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "b_t");
   if (!dummy) printf("error:bad type, expected b_t\n");
   return dummy;
@@ -58,9 +58,12 @@ int new_b_t(lua_State* ls) {
     printf("today isnt your day, is it?no more room on top of stack\n");
     return 0;
   }
-  b_t* dummy = push_b_t(ls); // stack position -1 is now our pointer to a_t
-  dummy->b_float = lua_tonumber(ls, -3);
-  dummy->b_int = lua_tointeger(ls, -2);
+  float b_number_float = lua_tonumber(ls, -2);
+  int b_int = lua_tointeger(ls, -1);
+  lua_pop(ls, 2);
+  b_t* dummy = push_b_t(ls); // stack position -3 or 1 is now our pointer to a_t
+  dummy->b_float = lua_tonumber(ls, -2);
+  dummy->b_int = lua_tointeger(ls, -1);
   return 1;
 }
 static int getter_b_float(lua_State* ls) {
@@ -117,7 +120,7 @@ int b_t_register(lua_State *ls) {
 /******************************************************************************/
 static c_t* pop_c_t(lua_State* ls, int index) {
   c_t* dummy;
-  luaL_checktype(ls, index, LUA_TUSERDATA);
+  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "c_t");
   if (!dummy) printf("error:bad type, expected c_t\n");
   return dummy;
@@ -131,7 +134,6 @@ c_t* push_c_t(lua_State* ls) {
   luaL_getmetatable(ls, "c_t");
   lua_setmetatable(ls, -2);
   return dummy;
-  return NULL;
 }
 
 int c_t_push_args(lua_State* ls, c_t* c) {
@@ -149,9 +151,15 @@ int new_c_t(lua_State* ls) {
     printf("today isnt your day, is it?no more room on top of stack\n");
     return 0;
   }
-  c_t* dummy = push_c_t(ls); // stack position -1 is now our pointer to a_t
-  dummy->c_int = lua_tointeger(ls, -3);
-  dummy->c_string = lua_tostring(ls, -2);
+  // we intentionally use intermediate variables, this way if somebody passes no 
+  // args to our new function(or our lua constructor), they will still get an
+  // instance of our table
+  int c_int = lua_tointeger(ls, -2);
+  char* c_string = lua_tostring(ls, -1);
+  lua_pop(ls, 2);
+  c_t* dummy = push_c_t(ls); // stack position -3 or 1 is now our pointer to a_t
+  dummy->c_int = c_int;
+  dummy->c_string = c_string;
   return 1;
 }
 
@@ -184,9 +192,9 @@ static int setter_c_string(lua_State *ls) {
 static const luaL_Reg c_t_methods[] = {
     {"new", new_c_t},
     {"set_c_int", setter_c_int},
-    {"set_c_float", setter_c_string},
+    {"set_c_string", setter_c_string},
     {"c_int", getter_c_int},
-    {"c_float", getter_c_string},
+    {"c_string", getter_c_string},
     {0, 0}};
 static const luaL_Reg c_t_meta[] = {{0, 0}};
 
@@ -209,7 +217,7 @@ int c_t_register(lua_State *ls) {
 /******************************************************************************/
 static a_t* pop_a_t(lua_State* ls, int index) {
   a_t* dummy;
-  luaL_checktype(ls, index, LUA_TUSERDATA);
+  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "a_t");
   if (!dummy) printf("error:bad type, expected a_t\n");
   return dummy;
@@ -243,18 +251,24 @@ int new_a_t(lua_State* ls) {
     printf("today isnt your day, is it?no more room on top of stack\n");
     return 0;
   }
-  a_t* dummy = push_a_t(ls); // stack position -1 is now our pointer to a_t
-  dummy->a_int = lua_tointeger(ls, -6);
-  dummy->a_float = lua_tonumber(ls, -5);
-  dummy->a_string = lua_tostring(ls, -4);
-  dummy->a_p = lua_touserdata(ls, -3);
-  dummy->a_pp = lua_touserdata(ls, -2);
+  int a_int = lua_tointeger(ls, -1);
+  float a_float = lua_tonumber(ls, -2);
+  char* a_string = lua_tostring(ls, -3);
+  void* a_p = lua_touserdata(ls, -4);
+  void** a_pp = lua_touserdata(ls, -5);
+  lua_pop(ls, 5);
+  a_t* dummy = push_a_t(ls); // stack position -6 or 1 is now our pointer to a_t
+  dummy->a_int = a_int;
+  dummy->a_float = a_float;
+  dummy->a_string = a_string;
+  dummy->a_p = a_p;
+  dummy->a_pp = a_pp;
   return 1;
 }
 
 static int getter_a_float(lua_State* ls) {
   a_t* dummy = pop_a_t(ls, -1);
-  lua_pushnumber(ls, dummy->a_int);
+  lua_pushnumber(ls, dummy->a_float);
   return 1;
 }
 
@@ -279,8 +293,10 @@ static int getter_a_p(lua_State *ls) {
 }
 
 static int getter_a_pp(lua_State* ls) {
+  printf("stack height:%d\n", lua_gettop(ls));
   a_t* dummy = pop_a_t(ls, 1);
   lua_pop(ls, -1);
+  printf("stack height:%d\n", lua_gettop(ls));
   if (!lua_checkstack(ls, 3)) {
     printf("sacrifice a keyboard to the moon gods or something... couldnt grow stack.\n");
     return 0;
@@ -291,10 +307,13 @@ static int getter_a_pp(lua_State* ls) {
     if (dummy->a_pp[i] != NULL) {
       c_t_push_args(ls, dummy->a_pp[i]);
     } else {
+      printf("fuck\n");
       lua_pop(ls, 1);
       continue;
     }
     new_c_t(ls);
+    printf("here\n");
+    printf("stack height:%d\n", lua_gettop(ls));
     lua_settable(ls, -3);
   }
   return 1;
@@ -304,32 +323,39 @@ static int setter_a_int(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
   dummy->a_int = luaL_checkinteger(ls, 2);
   lua_settop(ls, 1);
-  return 1;
+  return 0;
 }
 
 static int setter_a_float(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
   dummy->a_float = lua_tonumber(ls, 2);
   lua_settop(ls, 1);
-  return 1;
+  return 0;
 }
 
 static int setter_a_string(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
   dummy->a_string = lua_tostring(ls, 2);
   lua_settop(ls, 1);
-  return 1;
+  return 0;
 }
 
 static int setter_a_p(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
   dummy->a_p = luaL_checkudata(ls, 2, "b_t");
   lua_settop(ls, 1);
-  return 1;
+  return 0;
 }
 
+// notice how we assume our new table type is always at the top of the stack?
+// the reason we do that is because from Lua the call looks like this:
+// a:set_a_pp(pp)
+// the above expression is syntactic sugar for a.set_a_pp(self, pp)
+// so the first argument being passed and hence the first argument on top of
+// the stack will be our table instance itself.
 static int setter_a_pp(lua_State* ls) {
   a_t* dummy = pop_a_t(ls, 1);
+  dummy->a_pp = malloc(sizeof(void*));
   if (!lua_checkstack(ls, 3)) {
     printf("is it a curse or something? couldnt grow stack.\n");
     return 0;
@@ -337,11 +363,16 @@ static int setter_a_pp(lua_State* ls) {
   int table_length = lua_rawlen(ls, 2);
   for (int i = 1; i <= table_length; ++i) {
     lua_rawgeti(ls, 2, i);
-    dummy->a_pp[i - 1] = luaL_checkudata(ls, -1, "c_t");
+    //luaL_getmetatable(ls, "c_t");
+    //lua_setmetatable(ls, -2);
+    //dummy->a_pp[i - 1] = luaL_checkudata(ls, -1, "c_t");
+    dummy->a_pp[i - 1] = lua_touserdata(ls, -1);
+    printf("int:%d\n", dummy->a_pp[i-1]->c_int);
     lua_pop(ls, 1);
   }
-  lua_settop(ls, 1);
-  return 1;
+  //lua_pop(ls, 1);
+  //lua_settop(ls, 1);
+  return 0;
 }
 
 static const luaL_Reg a_t_methods[] = {
