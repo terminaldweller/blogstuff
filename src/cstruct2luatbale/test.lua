@@ -7,6 +7,7 @@ function dummy_test()
   local cc = c_t()
 
   -- checking b_t
+  print("checking b_t:")
   print(b:b_int())
   b:set_b_int(20)
   print(b:b_int())
@@ -16,6 +17,7 @@ function dummy_test()
   print(b:b_float())
 
   -- checking c_t
+  print("checking c_t:")
   print(c:c_int())
   c:set_c_int(5)
   print(c:c_int())
@@ -30,7 +32,7 @@ function dummy_test()
   local d = {c, cc}
 
   -- checking a_t
-  print("-----------------------------------------------------------")
+  print("checking a_t:")
   print(a:a_int())
   a:set_a_int(5)
   print(a:a_int())
@@ -51,7 +53,6 @@ function dummy_test()
 
   a:set_a_int(0)
   print(a:a_pp())
-  --print("table len:"..#d)
   a:set_a_int(#d)
   a:set_a_pp(d)
   print(a:a_pp())

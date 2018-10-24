@@ -27,7 +27,6 @@ typedef struct {
 /******************************************************************************/
 static b_t* pop_b_t(lua_State* ls, int index) {
   b_t* dummy;
-  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "b_t");
   if (!dummy) printf("error:bad type, expected b_t\n");
   return dummy;
@@ -61,7 +60,7 @@ int new_b_t(lua_State* ls) {
   float b_number_float = lua_tonumber(ls, -2);
   int b_int = lua_tointeger(ls, -1);
   lua_pop(ls, 2);
-  b_t* dummy = push_b_t(ls); // stack position -3 or 1 is now our pointer to a_t
+  b_t* dummy = push_b_t(ls);
   dummy->b_float = lua_tonumber(ls, -2);
   dummy->b_int = lua_tointeger(ls, -1);
   return 1;
@@ -120,7 +119,6 @@ int b_t_register(lua_State *ls) {
 /******************************************************************************/
 static c_t* pop_c_t(lua_State* ls, int index) {
   c_t* dummy;
-  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "c_t");
   if (!dummy) printf("error:bad type, expected c_t\n");
   return dummy;
@@ -151,13 +149,14 @@ int new_c_t(lua_State* ls) {
     printf("today isnt your day, is it?no more room on top of stack\n");
     return 0;
   }
-  // we intentionally use intermediate variables, this way if somebody passes no 
+  // we intentionally use intermediate variables, this way if somebody passes no
   // args to our new function(or our lua constructor), they will still get an
-  // instance of our table
+  // instance of our table. you can call lua_gettop() to know if you have gotten
+  // any variables but im trying a make point here.
   int c_int = lua_tointeger(ls, -2);
   char* c_string = lua_tostring(ls, -1);
   lua_pop(ls, 2);
-  c_t* dummy = push_c_t(ls); // stack position -3 or 1 is now our pointer to a_t
+  c_t* dummy = push_c_t(ls);
   dummy->c_int = c_int;
   dummy->c_string = c_string;
   return 1;
@@ -217,7 +216,6 @@ int c_t_register(lua_State *ls) {
 /******************************************************************************/
 static a_t* pop_a_t(lua_State* ls, int index) {
   a_t* dummy;
-  //luaL_checktype(ls, index, LUA_TUSERDATA);
   dummy = luaL_checkudata(ls, index, "a_t");
   if (!dummy) printf("error:bad type, expected a_t\n");
   return dummy;
@@ -257,7 +255,7 @@ int new_a_t(lua_State* ls) {
   void* a_p = lua_touserdata(ls, -4);
   void** a_pp = lua_touserdata(ls, -5);
   lua_pop(ls, 5);
-  a_t* dummy = push_a_t(ls); // stack position -6 or 1 is now our pointer to a_t
+  a_t* dummy = push_a_t(ls);
   dummy->a_int = a_int;
   dummy->a_float = a_float;
   dummy->a_string = a_string;
@@ -293,10 +291,8 @@ static int getter_a_p(lua_State *ls) {
 }
 
 static int getter_a_pp(lua_State* ls) {
-  printf("stack height:%d\n", lua_gettop(ls));
   a_t* dummy = pop_a_t(ls, 1);
   lua_pop(ls, -1);
-  printf("stack height:%d\n", lua_gettop(ls));
   if (!lua_checkstack(ls, 3)) {
     printf("sacrifice a keyboard to the moon gods or something... couldnt grow stack.\n");
     return 0;
@@ -307,13 +303,10 @@ static int getter_a_pp(lua_State* ls) {
     if (dummy->a_pp[i] != NULL) {
       c_t_push_args(ls, dummy->a_pp[i]);
     } else {
-      printf("fuck\n");
       lua_pop(ls, 1);
       continue;
     }
     new_c_t(ls);
-    printf("here\n");
-    printf("stack height:%d\n", lua_gettop(ls));
     lua_settable(ls, -3);
   }
   return 1;
@@ -355,7 +348,7 @@ static int setter_a_p(lua_State *ls) {
 // the stack will be our table instance itself.
 static int setter_a_pp(lua_State* ls) {
   a_t* dummy = pop_a_t(ls, 1);
-  dummy->a_pp = malloc(sizeof(void*));
+  dummy->a_pp = lua_newuserdata(ls, sizeof(void*));
   if (!lua_checkstack(ls, 3)) {
     printf("is it a curse or something? couldnt grow stack.\n");
     return 0;
@@ -363,15 +356,10 @@ static int setter_a_pp(lua_State* ls) {
   int table_length = lua_rawlen(ls, 2);
   for (int i = 1; i <= table_length; ++i) {
     lua_rawgeti(ls, 2, i);
-    //luaL_getmetatable(ls, "c_t");
-    //lua_setmetatable(ls, -2);
-    //dummy->a_pp[i - 1] = luaL_checkudata(ls, -1, "c_t");
     dummy->a_pp[i - 1] = lua_touserdata(ls, -1);
     printf("int:%d\n", dummy->a_pp[i-1]->c_int);
     lua_pop(ls, 1);
   }
-  //lua_pop(ls, 1);
-  //lua_settop(ls, 1);
   return 0;
 }
 
@@ -408,21 +396,25 @@ int a_t_register(lua_State *ls) {
 }
 /******************************************************************************/
 #pragma weak main
+// we are using the main from lua.c so we can run the demo in a Lua REPL.
+// its better than doing it in Lua's C API in C.
 int main (int argc, char **argv) {
   int status, result;
-  lua_State *ls = luaL_newstate();  /* create state */
+  lua_State *ls = luaL_newstate();
+  // here we are registering the the new table types as globals
   a_t_register(ls);
   b_t_register(ls);
   c_t_register(ls);
+
   if (ls == NULL) {
     l_message(argv[0], "cannot create state: not enough memory");
     return EXIT_FAILURE;
   }
-  lua_pushcfunction(ls, &pmain);  /* to call 'pmain' in protected mode */
-  lua_pushinteger(ls, argc);  /* 1st argument */
-  lua_pushlightuserdata(ls, argv); /* 2nd argument */
-  status = lua_pcall(ls, 2, 1, 0);  /* do the call */
-  result = lua_toboolean(ls, -1);  /* get result */
+  lua_pushcfunction(ls, &pmain);
+  lua_pushinteger(ls, argc);
+  lua_pushlightuserdata(ls, argv);
+  status = lua_pcall(ls, 2, 1, 0);
+  result = lua_toboolean(ls, -1);
   report(ls, status);
   lua_close(ls);
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
