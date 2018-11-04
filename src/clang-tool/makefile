@@ -1,4 +1,4 @@
-TARGET=autosarpp
+TARGET=cfetool
 SHELL=bash
 SHELL?=bash
 CC=clang

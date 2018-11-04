@@ -1,19 +1,16 @@
-
-/*first line intentionally left blank.*/
 /*************************************************************************************************/
 //-*-c++-*-
-// autosar cpp 14 guideline compliance checker
+// a simple clang tool for llvm/clang 8.0.
 /*Copyright (C) 2018 Farzad Sadeghi
- * Licensed under LGPL-3.0
+ * Licensed under GPL-3.0
  * */
 /*************************************************************************************************/
 /*included modules*/
 /*project headers*/
 /*standard headers*/
-#include "./autosarpp.hpp"
+#include "./cfetool.hpp"
 #include <cassert>
 #include <cstdlib>
-#include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -40,7 +37,7 @@ using namespace clang::driver;
 using namespace clang::tooling;
 /*************************************************************************************************/
 namespace {
-static llvm::cl::OptionCategory APPCat("autosarpp custom options");
+static llvm::cl::OptionCategory APPCat("custom options");
 }
 /*************************************************************************************************/
 class CalledFunc : public MatchFinder::MatchCallback {
@@ -123,6 +120,10 @@ public:
                                   const clang::Module *Imported,
                                   SrcMgr::CharacteristicKind FileType) {
 #endif
+    /// for inclusion directives, we should make sure to check whether the header was found,
+    /// since otherwise we would end up dereferencing a null pointer somewhere.
+    /// clang will call our ppcallback even if clang can't find the header in which case, it
+    /// would return a header not found error.
   }
 
 private:
@@ -130,7 +131,8 @@ private:
   Rewriter &Rewrite;
 };
 /*************************************************************************************************/
-// brief A Clang Diagnostic Consumer that does nothing.
+/// brief A Clang Diagnostic Consumer that does nothing.
+/// you might not want clang to output its usual diagnostics.
 class BlankDiagConsumer : public clang::DiagnosticConsumer {
 public:
   BlankDiagConsumer() = default;
@@ -183,11 +185,13 @@ public:
 
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef file) override {
+    /// here we are registering our preprocessor callbacks for our tool
     CI.getPreprocessor().addPPCallbacks(
         llvm::make_unique<PPInclusion>(&CI.getSourceManager(), &TheRewriter));
     DiagnosticsEngine &DE = CI.getPreprocessor().getDiagnostics();
     DE.setClient(BDCProto, false);
     TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
+    /// here we are registering our astmathchers.
     return llvm::make_unique<MyASTConsumer>(TheRewriter);
   }
 
@@ -199,6 +203,7 @@ private:
 /*************************************************************************************************/
 /*Main*/
 int main(int argc, const char **argv) {
+  /// our custom commandline options are being handled here.
   CommonOptionsParser op(argc, argv, APPCat);
   const std::vector<std::string> &SourcePathList = op.getSourcePathList();
   ClangTool Tool(op.getCompilations(), op.getSourcePathList());
