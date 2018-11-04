@@ -15,6 +15,7 @@ A Telegram-cli Lua script has to implement a couple of hook functions(the API gi
 * `on_user_update(user, what_changed)` is called when there is an update on the user's info.<br/>
 * `on_chat_update(user, what_changed)` is called when there is an update on a chat info.<br>
 * `on_secret_chat_update(user, what_changed)` is called when there is updated info for a secret chat.<br/>
+
 You can read the Lua API documentation [here](https://github.com/vysheng/tg/blob/master/README-LUA). The documentation could use some help. If you can't find anything there, either look at the source code for the Lua API [here](https://github.com/vysheng/tg/blob/master/lua-tg.c) or just look at the Python API doc [here](https://github.com/vysheng/tg/blob/master/README-PY.md).<br/>
 We are only going to implement `on_binlog_replay_end` and `on_msg_receive`.<br/>
 Implementing those two hooks would give us a way to know when we receive a new maessage and if for whatever reason we missed that, how many unread messages we have.<br/>
