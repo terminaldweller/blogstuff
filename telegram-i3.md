@@ -1,4 +1,4 @@
-#Telegram-cli Notifications for i3wm
+# Telegram-cli Notifications for i3wm
 
 My first experience with a Linux desktop environment was gnome. It was fine, I guess, but I spent most of my time in the terminal so I never really learned where anythign was or how to do anything using gnome. I just had it.<br/>
 Later on I got introduced to i3wm(i3 for short). Love at first sight.<br/>
