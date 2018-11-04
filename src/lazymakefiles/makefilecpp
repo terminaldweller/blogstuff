@@ -144,12 +144,12 @@ format:
 	- clang-format -i $(SRCS) $(HDRS)
 
 clean:
-	rm -f *.o *.dis *.odbg *.ocov *~ $(TARGET) $(TARGET).so $(TARGET)-static $(TARGET)-dbg $(TARGET).a $(TARGET)-cov
+	rm -f *.o *.dis *.odbg *.ocov *.js *~ $(TARGET) $(TARGET).so $(TARGET)-static $(TARGET)-dbg $(TARGET).a $(TARGET)-cov
 
 deepclean: clean
 	- rm tags
 	- rm .depend
-	- rm ./default.profraw
+	- rm ./default.profraw ./default.profdata
 	- rm vgcore.*
 
 help:
