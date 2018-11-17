@@ -1,3 +1,6 @@
 [submodule "src/cstruct2luatbale/lua"]
 	path = src/cstruct2luatbale/lua
 	url = https://github.com/lua/lua
+[submodule "src/clang-tool/cfe-extra"]
+	path = src/clang-tool/cfe-extra
+	url = https://github.com/bloodstalker/cfe-extra
