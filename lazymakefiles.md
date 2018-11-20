@@ -1,4 +1,4 @@
-(original Medium post)[https://medium.com/@thabogre/lazy-makefiles-ce1997412700]
+[original Medium post](https://medium.com/@thabogre/lazy-makefiles-ce1997412700)
 
 # Lazy Makefiles
 
