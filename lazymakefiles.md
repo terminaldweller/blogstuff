@@ -1,3 +1,5 @@
+(original Medium post)[https://medium.com/@thabogre/lazy-makefiles-ce1997412700]
+
 # Lazy Makefiles
 
 I kept finding myself needing to build some C or C++ code but I just couldn't be bothered to write a makefile from ground up. My life's too short for that. The code was either not that big of a deal or the build process was not anything complicated.<br/>

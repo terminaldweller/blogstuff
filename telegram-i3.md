@@ -1,3 +1,5 @@
+[original Medium post](https://medium.com/@thabogre/turning-a-c-structure-into-a-lua-table-563f5f99fc1d)
+
 # Telegram-cli Notifications for i3wm
 
 My first experience with a Linux desktop environment was gnome. It was fine, I guess, but I spent most of my time in the terminal so I never really learned where anythign was or how to do anything using gnome. I just had it.<br/>

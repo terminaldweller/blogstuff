@@ -1,3 +1,5 @@
+(original Medium post)[https://medium.com/@thabogre/turning-a-c-structure-into-a-lua-table-563f5f99fc1d]
+
 # C Struct to Lua table
 
 ## Overview
