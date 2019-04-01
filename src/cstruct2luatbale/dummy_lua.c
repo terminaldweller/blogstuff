@@ -39,6 +39,9 @@ b_t* push_b_t(lua_State* ls) {
   b_t* dummy = lua_newuserdata(ls, sizeof(b_t));
   luaL_getmetatable(ls, "b_t");
   lua_setmetatable(ls, -2);
+  lua_pushlightuserdata(ls, dummy);
+  lua_pushvalue(ls, -2);
+  lua_settable(ls, LUA_REGISTRYINDEX);
   return dummy;
 }
 
@@ -131,6 +134,9 @@ c_t* push_c_t(lua_State* ls) {
   c_t* dummy = lua_newuserdata(ls, sizeof(c_t));
   luaL_getmetatable(ls, "c_t");
   lua_setmetatable(ls, -2);
+  lua_pushlightuserdata(ls, dummy);
+  lua_pushvalue(ls, -2);
+  lua_settable(ls, LUA_REGISTRYINDEX);
   return dummy;
 }
 
@@ -228,6 +234,9 @@ a_t* push_a_t(lua_State* ls) {
   a_t* dummy = lua_newuserdata(ls, sizeof(a_t));
   luaL_getmetatable(ls, "a_t");
   lua_setmetatable(ls, -2);
+  lua_pushlightuserdata(ls, dummy);
+  lua_pushvalue(ls, -2);
+  lua_settable(ls, LUA_REGISTRYINDEX);
   return dummy;
 }
 
@@ -284,9 +293,9 @@ static int getter_a_int(lua_State* ls) {
 
 static int getter_a_p(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
+  lua_pop(ls, -1);
   lua_pushlightuserdata(ls, dummy->a_p);
-  luaL_getmetatable(ls, "b_t");
-  lua_setmetatable(ls, -2);
+  lua_gettable(ls, LUA_REGISTRYINDEX);
   return 1;
 }
 
@@ -301,12 +310,12 @@ static int getter_a_pp(lua_State* ls) {
   for (uint64_t i = 0; i < dummy->a_int; ++i) {
     lua_pushinteger(ls, i + 1);
     if (dummy->a_pp[i] != NULL) {
-      c_t_push_args(ls, dummy->a_pp[i]);
+      lua_pushlightuserdata(ls, dummy->a_pp[i]);
+      lua_gettable(ls, LUA_REGISTRYINDEX);
     } else {
       lua_pop(ls, 1);
       continue;
     }
-    new_c_t(ls);
     lua_settable(ls, -3);
   }
   return 1;
@@ -333,9 +342,11 @@ static int setter_a_string(lua_State *ls) {
   return 0;
 }
 
+//FIXME
 static int setter_a_p(lua_State *ls) {
   a_t* dummy = pop_a_t(ls, 1);
   dummy->a_p = luaL_checkudata(ls, 2, "b_t");
+  lua_pop(ls, 1);
   lua_settop(ls, 1);
   return 0;
 }
@@ -356,8 +367,7 @@ static int setter_a_pp(lua_State* ls) {
   int table_length = lua_rawlen(ls, 2);
   for (int i = 1; i <= table_length; ++i) {
     lua_rawgeti(ls, 2, i);
-    dummy->a_pp[i - 1] = lua_touserdata(ls, -1);
-    printf("int:%d\n", dummy->a_pp[i-1]->c_int);
+    dummy->a_pp[i - 1] = luaL_checkudata(ls, -1, "c_t");
     lua_pop(ls, 1);
   }
   return 0;
